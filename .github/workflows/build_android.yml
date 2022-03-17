@@ -69,7 +69,7 @@ jobs:
           --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
           ${{ inputs.build_params }}
         env:
-          SDK_REGISTRY_TOKEN: ${{ secrets.SDK_REGISTRY_MAPBOX}}
+          SDK_REGISTRY_TOKEN: ${{ secrets.SDK_REGISTRY_TOKEN}}
 
       - name: Build AAB
         if: ${{ inputs.build_aab }}
