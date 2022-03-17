@@ -1,0 +1,105 @@
+name: "[Reusable] Flutter Build Android"
+on:
+  workflow_call:
+    inputs:
+      base_url:
+        required: true
+        type: string
+      auth_url:
+        required: true
+        type: string
+      tracking_url:
+        required: true
+        type: string
+      notification_url:
+        required: true
+        type: string
+      build_params:
+        required: false
+        type: string
+      deploy:
+        required: false
+        type: boolean
+      release_notes: 
+        required: false
+        type: string
+      build_aab:
+        required: false
+        type: boolean
+    secrets:
+      FIREBASE_APP_ID:
+        required: true
+      FIREBASE_TOKEN:
+        required: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Generate build number
+        uses: einaregilsson/build-number@v3
+        with:
+          token: ${{secrets.github_token}}  
+        
+      - uses: actions/setup-java@v1
+        with:
+          java-version: "12.x"
+      - name: Install and set Flutter version
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '2.8.1'
+          channel: 'stable'
+      - name: Restore packages
+        run: flutter pub get
+
+      - name: Generate translations classes
+        run: flutter pub run intl_utils:generate
+
+      - name: Build Apk
+        run: >
+          flutter build apk
+          --build-number=$BUILD_NUMBER
+          --dart-define=BASE_URL=${{ inputs.base_url }}
+          --dart-define=TRACKING_URL=${{ inputs.tracking_url }}
+          --dart-define=AUTH_URL=${{ inputs.auth_url }}
+          --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
+          ${{ inputs.build_params }}
+
+      - name: Build AAB
+        if: ${{ inputs.build_aab }}
+        run: >
+          flutter build appbundle
+          --build-number=$BUILD_NUMBER
+          --dart-define=BASE_URL=${{ inputs.base_url }}
+          --dart-define=TRACKING_URL=${{ inputs.tracking_url }}
+          --dart-define=AUTH_URL=${{ inputs.auth_url }}
+          --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
+          ${{ inputs.build_params }}
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ !inputs.deploy }}
+        with:
+          retention-days: 1
+          name: app-release.apk
+          path: build/app/outputs/apk/release/app-release.apk
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v2
+        if: ${{ inputs.build_aab }}
+        with:
+          retention-days: 1
+          name: app-release.aab
+          path: build/app/outputs/bundle/release/app-release.aab
+
+      - name: Upload artifact to Firebase App Distribution
+        if: ${{ inputs.deploy }}
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_APP_ID }}
+          token: ${{ secrets.FIREBASE_TOKEN }}
+          groups: testers
+          file: build/app/outputs/apk/release/app-release.apk
+          releaseNotes: ${{ inputs.release_notes }}

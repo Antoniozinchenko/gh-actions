@@ -1,0 +1,131 @@
+name: "[Reusable] Flutter Build iOS"
+on:
+  workflow_call:
+    inputs:
+      base_url:
+        required: true
+        type: string
+      auth_url:
+        required: true
+        type: string
+      tracking_url:
+        required: false
+        default: '""'
+        type: string
+      notification_url:
+        default: '""'
+        required: true
+        type: string
+      build_params:
+        required: false
+        default: ""
+        type: string
+      export_options:
+        required: false
+        default: "ExportOptions.plist"
+        type: string
+      deploy:
+        required: false
+        type: boolean
+      release_notes: 
+        required: false
+        type: string
+    secrets:
+      FIREBASE_IOS_APP_ID:
+        required: true
+      FIREBASE_TOKEN:
+        required: true
+      P12_BASE64:
+        required: true
+      P12_PASSWORD:
+        required: true
+      PROVISIONING_PROFILE_PROD_BASE64:
+        required: true
+      PROVISIONING_PROFILE_DEV_BASE64:
+        required: true
+jobs:
+  build_ios:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Generate build number
+        uses: einaregilsson/build-number@v3
+        with:
+          token: ${{secrets.github_token}}  
+
+      - name: Install Apple Certificate
+        uses: apple-actions/import-codesign-certs@v1
+        with:
+          p12-file-base64: ${{ secrets.P12_BASE64 }}
+          p12-password: ${{ secrets.P12_PASSWORD }}
+
+
+      - name: Make dir for Provisioning Profiles
+        run: mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+
+      - name: Install the provisioning profile PROD
+        env:
+          PROVISIONING_CERTIFICATE_BASE64: ${{ secrets.PROVISIONING_PROFILE_PROD_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/build_pp_prod.mobileprovision
+          echo -n "$PROVISIONING_CERTIFICATE_BASE64" | base64 --decode --output $PP_PATH
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+      
+      - name: Install the provisioning profile DEV
+        env:
+          PROVISIONING_CERTIFICATE_BASE64: ${{ secrets.PROVISIONING_PROFILE_DEV_BASE64 }}
+        run: |
+          PP_PATH=$RUNNER_TEMP/build_pp_dev.mobileprovision
+          echo -n "$PROVISIONING_CERTIFICATE_BASE64" | base64 --decode --output $PP_PATH
+          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+        
+      - name: Install and set Flutter version
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '2.8.1'
+          channel: 'stable'
+      - name: Restore packages
+        run: flutter pub get
+
+      - name: Generate translations classes
+        run: flutter pub run intl_utils:generate
+
+      - name: Build Flutter Ipa
+        run: >
+          flutter build ipa
+          --build-number=$BUILD_NUMBER
+          --export-options-plist=./ios/${{ inputs.export_options }}
+          --dart-define=BASE_URL=${{ inputs.base_url }}
+          --dart-define=TRACKING_URL=${{ inputs.tracking_url }}
+          --dart-define=AUTH_URL=${{ inputs.auth_url }}
+          --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
+          ${{ inputs.build_params }}
+
+      - run: mv build/ios/ipa/*.ipa build/ios/ipa/app.ipa
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          retention-days: 1
+          name: app.ipa
+          path: build/ios/ipa/app.ipa
+
+  distribute:
+    needs: build_ios
+    if: ${{ inputs.deploy }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: app.ipa
+
+      - name: Upload artifact to Firebase App Distribution
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_IOS_APP_ID }}
+          token: ${{ secrets.FIREBASE_TOKEN }}
+          groups: testers
+          file: app.ipa
+          releaseNotes: ${{ inputs.release_notes }}
