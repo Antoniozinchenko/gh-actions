@@ -68,6 +68,8 @@ jobs:
           --dart-define=AUTH_URL=${{ inputs.auth_url }}
           --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
           ${{ inputs.build_params }}
+        env:
+          SDK_REGISTRY_TOKEN: ${{ secrets.SDK_REGISTRY_MAPBOX}}
 
       - name: Build AAB
         if: ${{ inputs.build_aab }}
@@ -79,6 +81,8 @@ jobs:
           --dart-define=AUTH_URL=${{ inputs.auth_url }}
           --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
           ${{ inputs.build_params }}
+        env:
+          SDK_REGISTRY_TOKEN: ${{ secrets.SDK_REGISTRY_MAPBOX}}
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v2
