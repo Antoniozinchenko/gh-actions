@@ -2,7 +2,10 @@
 
 You can use shared workflows for build mobile and android apps:
 
-For deploying Andorid and iOS apps, should be defined FIREBASE_APP_ID, FIREBASE_IOS_APP_ID and FIREBASE_TOKEN secrets keys
+For deploying Andorid and iOS apps, should be defined **FIREBASE_APP_ID**, **FIREBASE_IOS_APP_ID** and **FIREBASE_TOKEN** secrets keys
+
+
+For Mapbox SDK Login, should add **SDK_REGISTRY_TOKEN** secret
 
 ### Android build
 
@@ -20,6 +23,7 @@ build-android-worflow-name:
   secrets:
     FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }} # [REQUIRED]
     FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }} # [REQUIRED]
+    SDK_REGISTRY_TOKEN: ${{ secrets.SDK_REGISTRY_TOKEN }} # [Optional]
 ```
 
 
@@ -50,4 +54,5 @@ build-ipa-workflow:
     P12_PASSWORD: ${{ secrets.P12_PASSWORD }} # [REQUIRED]
     PROVISIONING_PROFILE_PROD_BASE64: ${{ secrets.PROVISIONING_PROFILE_PROD_BASE64 }} # [REQUIRED]
     PROVISIONING_PROFILE_DEV_BASE64: ${{ secrets.PROVISIONING_PROFILE_DEV_BASE64 }} # [REQUIRED]
+    SDK_REGISTRY_TOKEN: ${{ secrets.SDK_REGISTRY_TOKEN }} # [Optional]
 ```

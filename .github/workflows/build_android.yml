@@ -31,6 +31,8 @@ on:
         required: true
       FIREBASE_TOKEN:
         required: true
+      SDK_REGISTRY_TOKEN:
+        required: false
 jobs:
   build:
     runs-on: ubuntu-latest

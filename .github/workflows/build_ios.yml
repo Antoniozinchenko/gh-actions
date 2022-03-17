@@ -43,6 +43,8 @@ on:
         required: true
       PROVISIONING_PROFILE_DEV_BASE64:
         required: true
+      SDK_REGISTRY_TOKEN:
+        required: false
 jobs:
   build_ios:
     runs-on: macos-latest
@@ -54,6 +56,14 @@ jobs:
         uses: einaregilsson/build-number@v3
         with:
           token: ${{secrets.github_token}}  
+
+      - name: Configure Mapbox SDK login
+        uses: extractions/netrc@v1
+        if: ${{ secrets.SDK_REGISTRY_TOKEN != null }}
+        with:
+          machine: api.mapbox.com
+          username: mapbox
+          password: ${{ secrets.SDK_REGISTRY_TOKEN }}
 
       - name: Install Apple Certificate
         uses: apple-actions/import-codesign-certs@v1
