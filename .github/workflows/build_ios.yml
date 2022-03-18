@@ -14,7 +14,7 @@ on:
         type: string
       notification_url:
         default: '""'
-        required: true
+        required: false
         type: string
       build_params:
         required: false

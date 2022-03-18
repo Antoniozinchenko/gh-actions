@@ -9,10 +9,12 @@ on:
         required: true
         type: string
       tracking_url:
-        required: true
+        required: false
+        default: '""'
         type: string
       notification_url:
-        required: true
+        default: '""'
+        required: false
         type: string
       build_params:
         required: false
@@ -81,8 +83,8 @@ jobs:
           flutter build appbundle
           --build-number=$BUILD_NUMBER
           --dart-define=BASE_URL=${{ inputs.base_url }}
-          --dart-define=TRACKING_URL=${{ inputs.tracking_url }}
           --dart-define=AUTH_URL=${{ inputs.auth_url }}
+          --dart-define=TRACKING_URL=${{ inputs.tracking_url }}
           --dart-define=NOTIFICATION_URL=${{ inputs.notification_url }}
           ${{ inputs.build_params }}
         env:
