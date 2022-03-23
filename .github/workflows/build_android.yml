@@ -67,7 +67,7 @@ jobs:
       - name: Build Apk
         run: >
           flutter build apk
-          ${{ inputs.debug && '--debug' }}
+          ${{ inputs.debug && '--debug' || '' }}
           --build-number=$BUILD_NUMBER
           --dart-define=BASE_URL=${{ inputs.base_url }}
           --dart-define=TRACKING_URL=${{ inputs.tracking_url }}
