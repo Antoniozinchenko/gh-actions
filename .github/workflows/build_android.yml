@@ -31,6 +31,10 @@ on:
       build_aab:
         required: false
         type: boolean
+      flutter_version:
+        required: false
+        default: '2.8.1'
+        type: string
     secrets:
       FIREBASE_APP_ID:
         required: true
@@ -56,8 +60,7 @@ jobs:
       - name: Install and set Flutter version
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '2.8.1'
-          channel: 'stable'
+          flutter-version: ${{ inputs.flutter_version }}
       - name: Restore packages
         run: flutter pub get
 
